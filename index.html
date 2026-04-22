@@ -3,115 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nekobox 格式转换器</title>
+    <title>读取剪贴板示例</title>
     <style>
-        body {
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h2 { margin-top: 0; font-size: 1.2rem; color: #1a73e8; }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:active { background-color: #1557b0; }
-        .result-area {
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        #display {
             margin-top: 20px;
             padding: 15px;
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            word-break: break-all;
+            border: 2px dashed #ccc;
             min-height: 50px;
-            font-family: monospace;
-            font-size: 0.9rem;
+            word-break: break-all;
+            background: #f9f9f9;
         }
-        .status {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #666;
-            text-align: center;
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>SOCKS5 转换工具</h2>
-    <button id="convertBtn">读取剪贴板并转换</button>
+    <h3>剪贴板内容读取器</h3>
     
-    <div id="status" class="status">等待操作...</div>
-    
-    <div style="margin-top: 15px; font-weight: bold;">转换结果：</div>
-    <div id="result" class="result-area">暂无数据</div>
-</div>
+    <button id="readBtn">点击读取剪贴板</button>
 
-<script>
-    const convertBtn = document.getElementById('convertBtn');
-    const resultDiv = document.getElementById('result');
-    const statusDiv = document.getElementById('status');
+    <div id="display">内容将显示在这里...</div>
 
-    convertBtn.addEventListener('click', async () => {
-        try {
-            // 1. 从剪贴板读取文本
-            const text = await navigator.clipboard.readText();
-            
-            if (!text || !text.includes('|')) {
-                statusDiv.innerText = "错误：剪贴板内容格式不正确";
-                return;
+    <script>
+        const btn = document.getElementById('readBtn');
+        const display = document.getElementById('display');
+
+        btn.addEventListener('click', async () => {
+            try {
+                // 调用浏览器标准的 Clipboard API
+                const text = await navigator.clipboard.readText();
+                
+                if (text) {
+                    display.innerText = "读取到的内容：\n" + text;
+                    display.style.color = "black";
+                } else {
+                    display.innerText = "剪贴板是空的";
+                }
+            } catch (err) {
+                // 如果用户拒绝权限或环境不支持
+                display.innerText = "读取失败: " + err.message;
+                display.style.color = "red";
+                console.error('无法读取剪贴板: ', err);
             }
-
-            // 2. 解析文本
-            // 格式: c535.ips5.vip|9125|2974348|a26d8afba|2026-05-01
-            const parts = text.trim().split('|');
-            
-            if (parts.length < 4) {
-                statusDiv.innerText = "错误：解析失败，字段不足";
-                return;
-            }
-
-            const host = parts[0];
-            const port = parts[1];
-            const user = parts[2];
-            const pass = parts[3];
-            const date = parts[4] || "S5"; // 日期作为备注
-
-            // 3. 构建 SOCKS5 链接
-            // 格式: socks5://user:pass@host:port#remarks
-            const sk5Link = `socks5://${user}:${pass}@${host}:${port}#${date}`;
-
-            // 4. 显示在网页上
-            resultDiv.innerText = sk5Link;
-
-            // 5. 自动写回剪贴板
-            await navigator.clipboard.writeText(sk5Link);
-            
-            statusDiv.style.color = "#28a745";
-            statusDiv.innerText = "✔ 已成功转换并复制到剪贴板";
-
-        } catch (err) {
-            console.error(err);
-            statusDiv.style.color = "#dc3545";
-            statusDiv.innerText = "出错：请确保已授予剪贴板权限";
-        }
-    });
-</script>
-
+        });
+    </script>
 </body>
 </html>
