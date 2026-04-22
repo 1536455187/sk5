@@ -1,48 +1,61 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>读取剪贴板</title>
-    <style>
-        body {
-            max-width: 800px;
-            margin: 30px auto;
-            padding: 0 20px;
-            font-family: system-ui;
-        }
-        #result {
-            white-space: pre-wrap;
-            border: 1px solid #ccc;
-            padding: 15px;
-            min-height: 100px;
-            margin-top: 15px;
-            border-radius: 6px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK5 转换</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#121212;color:#e0e0e0;font-family:system-ui}
+.container{max-width:420px;margin:0 auto}
+button{width:100%;padding:14px;background:#007aff;color:#fff;border:none;border-radius:12px;font-size:16px;margin:10px 0}
+#result{background:#1c1c1e;padding:14px;border-radius:12px;min-height:80px;white-space:pre-wrap;word-break:break-all;margin-top:10px;color:#34c759}
+.tip{font-size:13px;color:#8e8e93;margin-bottom:6px}
+</style>
 </head>
+
 <body>
-    <h2>读取剪贴板内容</h2>
-    <button id="readBtn">点击读取剪贴板</button>
-    <div id="result">内容将显示在这里...</div>
+<div class="container">
+  <div class="tip">先复制你的节点行，再点按钮</div>
+  <button id="go">读取剪贴板 → 转 SK5 → 自动复制</button>
+  <div id="result">结果将显示在这里</div>
+</div>
 
-    <script>
-        const btn = document.getElementById('readBtn');
-        const result = document.getElementById('result');
+<script>
+const btn = document.getElementById('go');
+const res = document.getElementById('result');
 
-        btn.addEventListener('click', async () => {
-            try {
-                // 读取剪贴板文本
-                const text = await navigator.clipboard.readText();
-                result.textContent = text;
-            } catch (err) {
-                result.textContent = '读取失败：' + err.message + '\n请允许剪贴板权限，或在 HTTPS/localhost 下运行';
-            }
-        });
-    </script>
+btn.addEventListener('click', async () => {
+  try {
+    // 1. 读取剪贴板
+    const text = await navigator.clipboard.readText();
+    const t = text.trim();
+
+    // 2. 按 | 分割
+    const arr = t.split('|');
+    if(arr.length < 5) {
+      res.textContent = '格式不正确';
+      return;
+    }
+
+    const server = arr[0];
+    const port = arr[1];
+    const pwd = arr[2];
+    const remark = arr[4] || 'sk5';
+
+    // 3. 生成 Nekobox sk5 格式
+    const sk5 = `sk5://${pwd}@${server}:${port}#${remark}`;
+
+    // 4. 显示
+    res.textContent = sk5;
+
+    // 5. 自动复制（不弹窗）
+    await navigator.clipboard.writeText(sk5);
+
+  } catch(e) {
+    res.textContent = '失败：' + e.message + '\n请允许剪贴板权限';
+  }
+});
+</script>
 </body>
 </html>
