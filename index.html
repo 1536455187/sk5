@@ -3,80 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nekobox 格式转换器</title>
+    <title>Socks5 转换器</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; line-height: 1.6; color: #333; }
-        .card { border-radius: 12px; border: 1px solid #ddd; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         button { 
-            width: 100%; padding: 12px; background: #5c6bc0; color: white; 
-            border: none; border-radius: 8px; font-size: 16px; margin-bottom: 15px;
+            width: 100%; padding: 15px; background-color: #007aff; color: white; 
+            border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
         }
-        button:active { background: #3f51b5; }
-        #result { 
-            word-break: break-all; background: #f4f4f4; padding: 10px; 
-            border-radius: 5px; min-height: 40px; border: 1px dashed #bbb;
+        button:active { background-color: #0056b3; }
+        .result-box { 
+            margin-top: 20px; padding: 15px; background: #f9f9f9; border: 1px dashed #ccc; 
+            border-radius: 8px; word-break: break-all; min-height: 40px; color: #333;
         }
-        .label { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .label { font-size: 14px; color: #666; margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
     <button id="convertBtn">从剪贴板读取并转换</button>
     
-    <div class="label">转换结果 (已自动复制):</div>
-    <div id="result">等待操作...</div>
+    <div class="label" style="margin-top: 20px;">转换结果：</div>
+    <div id="displayArea" class="result-box">等待操作...</div>
 </div>
 
 <script>
-    const btn = document.getElementById('convertBtn');
-    const display = document.getElementById('result');
+    const convertBtn = document.getElementById('convertBtn');
+    const displayArea = document.getElementById('displayArea');
 
-    btn.addEventListener('click', async () => {
+    convertBtn.addEventListener('click', async () => {
         try {
-            // 1. 从剪贴板读取文本
-            const rawText = await navigator.clipboard.readText();
-            const data = rawText.trim();
-
-            if (!data.includes('|')) {
-                display.innerText = "剪贴板格式不正确";
-                return;
-            }
-
-            // 2. 解析数据 (c535.ips5.vip|9125|2974348|a26d8afba|2026-05-01)
-            const parts = data.split('|');
-            if (parts.length < 4) {
-                display.innerText = "数据字段不足";
-                return;
-            }
-
-            const host = parts[0];
-            const port = parts[1];
-            const user = parts[2];
-            const pass = parts[3];
-            const note = parts[4] || "Imported";
-
-            // 3. 构建 SOCKS5 链接
-            // 格式: socks5://username:password@host:port#remarks
-            const sk5Url = `socks5://${user}:${pass}@${host}:${port}#${encodeURIComponent(note)}`;
-
-            // 4. 显示到网页
-            display.innerText = sk5Url;
-
-            // 5. 自动复制回剪贴板 (无弹窗)
-            await navigator.clipboard.writeText(sk5Url);
+            // 1. 获取剪贴板文本
+            const text = await navigator.clipboard.readText();
             
-            // 按钮文字反馈
-            const originalText = btn.innerText;
-            btn.innerText = "转换并复制成功！";
-            btn.style.background = "#4caf50";
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.background = "#5c6bc0";
-            }, 1500);
+            // 2. 格式解析 (c535.ips5.vip|9125|2974348|a26d8afba|2026-05-01)
+            const parts = text.trim().split('|');
+            
+            if (parts.length < 4) {
+                displayArea.innerText = "错误：剪贴板内容格式不正确";
+                return;
+            }
 
+            const [host, port, user, pass, date] = parts;
+            
+            // 3. 构造 Nekobox 识别的 socks5 格式
+            // 格式：socks5://user:pass@host:port#备注
+            const encodedUser = encodeURIComponent(user);
+            const encodedPass = encodeURIComponent(pass);
+            const remark = encodeURIComponent(`S5_${date || 'node'}`);
+            
+            const sk5Url = `socks5://${encodedUser}:${encodedPass}@${host}:${port}#${remark}`;
+
+            // 4. 写入剪贴板
+            await navigator.clipboard.writeText(sk5Url);
+
+            // 5. 显示在页面
+            displayArea.innerText = sk5Url;
+            
         } catch (err) {
-            display.innerText = "错误: " + err.message + "\n(请确保已授予剪贴板权限)";
+            displayArea.innerText = "操作失败：请确保已授予剪贴板权限 " + err;
         }
     });
 </script>
