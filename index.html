@@ -25,67 +25,61 @@
             background: #4285f4;
             color: #fff;
             border: none;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            cursor: pointer;
-        }
-        #result {
-            width: 100%;
-            height: 220px;
-            padding: 12px;
             border-radius: 8px;
-            border: 1px solid #ddd;
-            background: #fff;
-            white-space: pre-wrap;
-            word-break: break-all;
-            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 20px;
         }
-        .tip {
-            color: #666;
-            font-size: 12px;
-            margin-bottom: 10px;
+        .result {
+            background: #fff;
+            padding: 14px;
+            border-radius: 8px;
+            word-break: break-all;
+            white-space: pre-wrap;
+            min-height: 60px;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="tip">剪贴板格式：host|port|user|pass|expire</div>
-        <button id="convert">读取剪贴板并转换为 SK5</button>
-        <textarea id="result" readonly placeholder="转换结果将显示在这里"></textarea>
+        <button id="convertBtn">从剪贴板读取并转换为 SK5</button>
+        <div class="result" id="result">结果将显示在这里</div>
     </div>
 
     <script>
-        const btn = document.getElementById('convert');
+        const btn = document.getElementById('convertBtn');
         const res = document.getElementById('result');
 
         btn.addEventListener('click', async () => {
             try {
-                // 读取剪贴板
-                const text = await navigator.clipboard.readText();
-                const parts = text.trim().split('|');
+                // 1. 读取剪贴板
+                const clipText = await navigator.clipboard.readText();
+                const t = clipText.trim();
 
-                if (parts.length < 5) {
-                    res.value = '格式错误\n需要：host|port|user|pass|expire';
+                // 2. 按 | 分割
+                const arr = t.split('|');
+                if (arr.length < 5) {
+                    res.textContent = '格式不正确：需要 host|port|user|pass|expire';
                     return;
                 }
 
-                const host = parts[0];
-                const port = parts[1];
-                const user = parts[2];
-                const pass = parts[3];
-                const expire = parts[4];
+                const host = arr[0].trim();
+                const port = arr[1].trim();
+                const user = arr[2].trim();
+                const pass = arr[3].trim();
+                const expire = arr[4].trim();
 
-                // Nekobox sk5 标准格式
+                // 3. 生成 NekoBox sk5 格式
                 const sk5 = `sk5://${user}:${pass}@${host}:${port}#${expire}`;
 
-                // 显示
-                res.value = sk5;
+                // 4. 显示
+                res.textContent = sk5;
 
-                // 自动复制
+                // 5. 自动复制
                 await navigator.clipboard.writeText(sk5);
 
             } catch (e) {
-                res.value = '失败：' + e.message;
+                res.textContent = '失败：' + e.message;
             }
         });
     </script>
